@@ -92,10 +92,12 @@ def draw_bubble_surface(numbers, color_positions = {}):
 
     window.blit(bubble_sort_surface, (0,100))
 
-def draw_merge_surface(numbers, color_positions = {}):
+def draw_merge_surface(numbers, l, r, color_positions = {}):
     merge_sort_surface.fill(WHITE)
 
     for i in range(len(numbers)):
+        if i < l or i > r:
+            continue
         x = i * BAR_WIDTH + SURFACE_PADDING
         y = SURFACE_HEIGHT - (numbers[i]*BAR_HEIGHT) - SURFACE_PADDING
 
@@ -225,21 +227,64 @@ def insertion_sort(numbers):
     draw_insertion_surface(numbers)
     pygame.display.flip()
 
+def merge_helper(numbers, left, right):
+    # print(left, right)
+    if len(numbers) > 1:
+        draw_merge_surface(merge_sort_numbers[0:left] + numbers + merge_sort_numbers[right:], left, right, {left:RED, right:GREEN})
+        pygame.display.flip()
+    
+        mid = len(numbers)//2
+
+        left_numbers = numbers[:mid]
+        right_numbers = numbers[mid:]
+        
+        merge_helper(left_numbers, left, left+mid-1)
+        merge_helper(right_numbers, left+mid, right)
+
+        i = j = k = 0
+        while i < len(left_numbers) and j < len(right_numbers):
+            if left_numbers[i] < right_numbers[j]:
+                numbers[k] = left_numbers[i]
+                draw_merge_surface(merge_sort_numbers[0:left] + numbers + merge_sort_numbers[right:], left, right, {k:RED, i:GREEN})
+                pygame.display.flip()
+                i += 1
+            else:
+                numbers[k] = right_numbers[j]
+                draw_merge_surface(merge_sort_numbers[0:left] + numbers + merge_sort_numbers[right:], left, right, {k:RED, j:GREEN})
+                pygame.display.flip()
+                j += 1
+            
+            time.sleep(0.01)
+            k += 1
+
+        while i < len(left_numbers):
+            numbers[k] = left_numbers[i]
+            time.sleep(0.01)
+            i += 1
+            k += 1
+        
+        while j < len(right_numbers):
+            numbers[k] = right_numbers[j]
+            time.sleep(0.01)
+            j += 1
+            k += 1
+
+        # print(merge_sort_numbers)
+
+        draw_merge_surface(merge_sort_numbers[0:left] + numbers + merge_sort_numbers[right:], left, right)
+        pygame.display.flip()
+
 def merge_sort(numbers):
     merge_start = time.time()
-    for i in range(len(numbers)):
-        for j in range(len(numbers) - i - 1):
-            if numbers[j] < numbers[j+1]:
-                numbers[j], numbers[j+1] = numbers[j+1], numbers[j]
-                draw_merge_surface(numbers, {j:RED, j+1:GREEN})
-                pygame.display.flip()
-                time.sleep(0.01)
+    
+    merge_helper(numbers, 0, len(numbers)-1)
 
     merge_end = time.time()
     timings["merge"] = merge_end - merge_start
     time_text = TIME_FONT.render(f"  Time Taken: {round(timings['merge'], 2)} seconds", True, BLACK)
+    # merge_sort_surface.fill((255, 255, 255, 255))
     window.blit(time_text, (500-time_text.get_width()-20, 672))
-    draw_merge_surface(numbers)
+    # draw_merge_surface(numbers, 0, len(numbers)-1)
     pygame.display.flip()
 
 def quick_sort(numbers):
@@ -312,7 +357,7 @@ draw_static_items()
 
 draw_bubble_surface(bubble_sort_numbers)
 draw_insertion_surface(insertion_sort_numbers)
-draw_merge_surface(merge_sort_numbers)
+draw_merge_surface(merge_sort_numbers, 0, len(merge_sort_numbers)-1)
 draw_selection_surface(selection_sort_numbers)
 draw_quick_surface(selection_sort_numbers)
 draw_shell_surface(selection_sort_numbers)
@@ -338,7 +383,7 @@ while True:
                     
                     draw_bubble_surface(bubble_sort_numbers)
                     draw_insertion_surface(insertion_sort_numbers)
-                    draw_merge_surface(merge_sort_numbers)
+                    draw_merge_surface(merge_sort_numbers, 0, len(merge_sort_numbers))
                     draw_selection_surface(selection_sort_numbers)
                     draw_quick_surface(selection_sort_numbers)
                     draw_shell_surface(selection_sort_numbers)
