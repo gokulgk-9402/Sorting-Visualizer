@@ -15,8 +15,10 @@ GREEN = 100, 255, 100
 RED = 255, 100, 100
 GREY = 150, 150, 150
 BLUE = 100, 100, 255
+YELLOW = 255, 255, 51
 
 COLORS = [(150, 150, 255), (175, 175, 255), (200, 200, 255)]
+COLORS2 = [(255, 150, 150), (255, 175, 175), (255, 200, 200)]
 
 SURFACE_HEIGHT = 270
 SURFACE_WIDTH = 500
@@ -92,16 +94,19 @@ def draw_bubble_surface(numbers, color_positions = {}):
 
     window.blit(bubble_sort_surface, (0,100))
 
-def draw_merge_surface(numbers, l, r, color_positions = {}):
+def draw_merge_surface(numbers, l, r, m, color_positions = {}):
     merge_sort_surface.fill(WHITE)
 
     for i in range(len(numbers)):
-        if i < l or i > r:
-            continue
+        # if i < l or i > r:
+        #     continue
         x = i * BAR_WIDTH + SURFACE_PADDING
         y = SURFACE_HEIGHT - (numbers[i]*BAR_HEIGHT) - SURFACE_PADDING
 
-        color = COLORS[i%3]
+        if i <= m:
+            color = COLORS[i%3]
+        else:
+            color = COLORS2[i%3]
 
         if i in color_positions:
             color = color_positions[i]
@@ -192,7 +197,7 @@ def bubble_sort(numbers):
                 numbers[j], numbers[j+1] = numbers[j+1], numbers[j]
                 draw_bubble_surface(numbers, {j:RED, j+1:GREEN})
                 pygame.display.flip()
-                time.sleep(0.01)
+                time.sleep(0.02)
 
     bubble_end = time.time()
     timings["bubble"] = bubble_end - bubble_start
@@ -211,14 +216,14 @@ def insertion_sort(numbers):
             numbers[j+1] = numbers[j]
             draw_insertion_surface(numbers, {j:RED, j+1:GREEN})
             pygame.display.flip()
-            time.sleep(0.01)
+            time.sleep(0.02)
             j -= 1
         
         if numbers[j+1] != key:
             numbers[j+1] = key
             draw_insertion_surface(numbers, {i:RED, j+1:GREEN})
             pygame.display.flip()
-            time.sleep(0.01)
+            time.sleep(0.02)
 
     insertion_end = time.time()
     timings["insertion"] = insertion_end - insertion_start
@@ -228,30 +233,29 @@ def insertion_sort(numbers):
     pygame.display.flip()
 
 def merge_helper(numbers, left, right):
-    # print(left, right)
     if len(numbers) > 1:
-        draw_merge_surface(merge_sort_numbers[0:left] + numbers + merge_sort_numbers[right:], left, right, {left:RED, right:GREEN})
-        pygame.display.flip()
-    
         mid = len(numbers)//2
 
         left_numbers = numbers[:mid]
         right_numbers = numbers[mid:]
+
+        draw_merge_surface(left_numbers+right_numbers, left, right-1, mid)
+        pygame.display.flip()
         
         merge_helper(left_numbers, left, left+mid-1)
+        draw_merge_surface(left_numbers+right_numbers, left, right-1, mid)
+        pygame.display.flip()
         merge_helper(right_numbers, left+mid, right)
+        draw_merge_surface(left_numbers+right_numbers, left, right-1, mid)
+        pygame.display.flip()
 
         i = j = k = 0
         while i < len(left_numbers) and j < len(right_numbers):
             if left_numbers[i] < right_numbers[j]:
                 numbers[k] = left_numbers[i]
-                draw_merge_surface(merge_sort_numbers[0:left] + numbers + merge_sort_numbers[right:], left, right, {k:RED, i:GREEN})
-                pygame.display.flip()
                 i += 1
             else:
                 numbers[k] = right_numbers[j]
-                draw_merge_surface(merge_sort_numbers[0:left] + numbers + merge_sort_numbers[right:], left, right, {k:RED, j:GREEN})
-                pygame.display.flip()
                 j += 1
             
             time.sleep(0.01)
@@ -269,10 +273,9 @@ def merge_helper(numbers, left, right):
             j += 1
             k += 1
 
-        # print(merge_sort_numbers)
-
-        draw_merge_surface(merge_sort_numbers[0:left] + numbers + merge_sort_numbers[right:], left, right)
+        draw_merge_surface(numbers, left, right-1, mid)
         pygame.display.flip()
+        # time.sleep(0.01)
 
 def merge_sort(numbers):
     merge_start = time.time()
@@ -284,20 +287,45 @@ def merge_sort(numbers):
     time_text = TIME_FONT.render(f"  Time Taken: {round(timings['merge'], 2)} seconds", True, BLACK)
     # merge_sort_surface.fill((255, 255, 255, 255))
     window.blit(time_text, (500-time_text.get_width()-20, 672))
-    # draw_merge_surface(numbers, 0, len(numbers)-1)
+    draw_merge_surface(merge_sort_numbers, 0, len(merge_sort_numbers)-1, len(merge_sort_numbers))
     pygame.display.flip()
+
+def partition(numbers, low, high):
+
+    pivot = numbers[high]
+
+    i = low - 1
+    for j in range(low,high):
+        if numbers[j] < pivot:
+            i += 1
+            (numbers[i], numbers[j]) = (numbers[j], numbers[i])
+            draw_quick_surface(numbers, {i:RED, j:GREEN, high:YELLOW})
+            pygame.display.flip()
+            time.sleep(0.02)
+
+    if i+1 != high:
+        (numbers[i+1], numbers[high]) = (numbers[high], numbers[i+1])
+        draw_quick_surface(numbers, {i+1:YELLOW, high:RED})
+        pygame.display.flip()
+        time.sleep(0.02)
+
+    return i + 1
+
+def quick_sort_helper(numbers, low, high):
+    if low < high:
+        time.sleep(0.02)
+        pi = partition(numbers, low, high)
+
+        quick_sort_helper(numbers, low, pi-1)
+        quick_sort_helper(numbers, pi+1, high)
 
 def quick_sort(numbers):
     quick_start = time.time()
-    for i in range(len(numbers)):
-        for j in range(len(numbers) - i - 1):
-            if numbers[j] < numbers[j+1]:
-                numbers[j], numbers[j+1] = numbers[j+1], numbers[j]
-                draw_quick_surface(numbers, {j:RED, j+1:GREEN})
-                pygame.display.flip()
-                time.sleep(0.01)
+    
+    quick_sort_helper(numbers, 0, len(numbers)-1)
 
     quick_end = time.time()
+
     timings["quick"] = quick_end - quick_start
     time_text = TIME_FONT.render(f"  Time Taken: {round(timings['quick'], 2)} seconds", True, BLACK)
     window.blit(time_text, (1000-time_text.get_width()-20, 672))
@@ -312,7 +340,7 @@ def shell_sort(numbers):
                 numbers[j], numbers[j+1] = numbers[j+1], numbers[j]
                 draw_shell_surface(numbers, {j:RED, j+1:GREEN})
                 pygame.display.flip()
-                time.sleep(0.01)
+                time.sleep(0.02)
 
     shell_end = time.time()
     timings["shell"] = shell_end - shell_start
@@ -357,7 +385,7 @@ draw_static_items()
 
 draw_bubble_surface(bubble_sort_numbers)
 draw_insertion_surface(insertion_sort_numbers)
-draw_merge_surface(merge_sort_numbers, 0, len(merge_sort_numbers)-1)
+draw_merge_surface(merge_sort_numbers, 0, len(merge_sort_numbers)-1, len(merge_sort_numbers))
 draw_selection_surface(selection_sort_numbers)
 draw_quick_surface(selection_sort_numbers)
 draw_shell_surface(selection_sort_numbers)
@@ -373,6 +401,8 @@ while True:
 
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
+                    window.fill(WHITE)
+                    timings = {}
                     list_of_numbers = generate_numbers(50, 0, 100)
                     bubble_sort_numbers = list_of_numbers[:]
                     insertion_sort_numbers = list_of_numbers[:]
@@ -383,9 +413,9 @@ while True:
                     
                     draw_bubble_surface(bubble_sort_numbers)
                     draw_insertion_surface(insertion_sort_numbers)
-                    draw_merge_surface(merge_sort_numbers, 0, len(merge_sort_numbers))
+                    draw_merge_surface(merge_sort_numbers, 0, len(merge_sort_numbers), len(merge_sort_numbers))
                     draw_selection_surface(selection_sort_numbers)
-                    draw_quick_surface(selection_sort_numbers)
+                    draw_quick_surface(quick_sort_numbers)
                     draw_shell_surface(selection_sort_numbers)
                 
                 elif event.key == pygame.K_SPACE:
@@ -409,11 +439,6 @@ while True:
                     selection_thread.join()
                     shell_thread.join()
                     quick_thread.join()
-
-                    # quick_sort(quick_sort_numbers)
-                    # shell_sort(shell_sort_numbers)
-                    # bubble_sort(bubble_sort_numbers)
-                    # insertion_sort(insertion_sort_numbers)
 
                     print(timings)
 
