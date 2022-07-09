@@ -1,4 +1,5 @@
 import time
+from numpy import number
 import pygame
 import random
 import sys
@@ -258,7 +259,7 @@ def merge_helper(numbers, left, right):
                 numbers[k] = right_numbers[j]
                 j += 1
             
-            time.sleep(0.01)
+            time.sleep(0.02)
             k += 1
 
         while i < len(left_numbers):
@@ -334,13 +335,27 @@ def quick_sort(numbers):
 
 def shell_sort(numbers):
     shell_start = time.time()
-    for i in range(len(numbers)):
-        for j in range(len(numbers) - i - 1):
-            if numbers[j] < numbers[j+1]:
-                numbers[j], numbers[j+1] = numbers[j+1], numbers[j]
-                draw_shell_surface(numbers, {j:RED, j+1:GREEN})
-                pygame.display.flip()
+    
+    gap = len(numbers)//2
+
+    while gap > 0:
+        j = gap
+        while j < len(numbers):
+            i = j - gap
+
+            while i >= 0:
+                if numbers[i+gap] > numbers[i]:
+                    break
+                else:
+                    numbers[i+gap], numbers[i] = numbers[i], numbers[i+gap]
+                    draw_shell_surface(numbers, {i:RED, i+gap:GREEN})
+                    pygame.display.flip()
+                
                 time.sleep(0.02)
+                
+                i -= gap
+            j += 1
+        gap //= 2
 
     shell_end = time.time()
     timings["shell"] = shell_end - shell_start
@@ -403,6 +418,7 @@ while True:
                 if event.key == pygame.K_r:
                     window.fill(WHITE)
                     timings = {}
+                    draw_static_items()
                     list_of_numbers = generate_numbers(50, 0, 100)
                     bubble_sort_numbers = list_of_numbers[:]
                     insertion_sort_numbers = list_of_numbers[:]
